@@ -4,7 +4,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# Set OpenAI API base URL to the proxy (ensure correct base URL)
+# Set OpenAI API base URL to the proxy
 openai.api_base = "https://aiproxy.sanand.workers.dev/openai/v1"
 
 # Set OpenAI API key to the proxy token from the environment variable
