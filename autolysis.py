@@ -17,30 +17,42 @@ def load_data(file_path):
         # Fallback for non-UTF-8 files
         return pd.read_csv(file_path, encoding="latin1")
 
-
-# Function to create charts
+# Function to create charts (with limit on the number of charts)
 def create_charts(df, output_folder):
     os.makedirs(output_folder, exist_ok=True)
-
+    
     # Filter only numeric columns for the correlation heatmap
     numeric_df = df.select_dtypes(include=["number"])
 
+    chart_count = 0
+
     if not numeric_df.empty:
-        # Example chart: Correlation heatmap
+        # Generate a correlation heatmap (only one)
         plt.figure(figsize=(10, 8))
         sns.heatmap(numeric_df.corr(), annot=True, cmap="coolwarm")
         plt.title("Correlation Heatmap")
         plt.savefig(f"{output_folder}/correlation_heatmap.png")
         plt.close()
+        chart_count += 1
 
-    # Example chart: Distribution of the first numeric column
-    numeric_columns = numeric_df.columns
-    if len(numeric_columns) > 0:
-        plt.figure(figsize=(10, 6))
-        sns.histplot(df[numeric_columns[0]], kde=True)
-        plt.title(f"Distribution of {numeric_columns[0]}")
-        plt.savefig(f"{output_folder}/{numeric_columns[0]}_distribution.png")
-        plt.close()
+        # Generate only distribution plots for the first numeric column
+        numeric_columns = numeric_df.columns
+        if len(numeric_columns) > 0:
+            plt.figure(figsize=(10, 6))
+            sns.histplot(df[numeric_columns[0]], kde=True)
+            plt.title(f"Distribution of {numeric_columns[0]}")
+            plt.savefig(f"{output_folder}/{numeric_columns[0]}_distribution.png")
+            plt.close()
+            chart_count += 1
+
+        # Optionally generate another distribution plot for the second numeric column
+        if len(numeric_columns) > 1 and chart_count < 3:
+            plt.figure(figsize=(10, 6))
+            sns.histplot(df[numeric_columns[1]], kde=True)
+            plt.title(f"Distribution of {numeric_columns[1]}")
+            plt.savefig(f"{output_folder}/{numeric_columns[1]}_distribution.png")
+            plt.close()
+            chart_count += 1
 
 # Function to generate story using OpenAI with gpt-4o-mini
 def generate_story(df):
@@ -59,10 +71,8 @@ def generate_story(df):
     # Generate the story using gpt-4o-mini for chat-based completion
     response = openai.ChatCompletion.create(
         model="gpt-4o-mini",  # Using gpt-4o-mini model for chat completion
-        messages=[
-            {"role": "system", "content": "You are a helpful data analyst."},
-            {"role": "user", "content": prompt}
-        ],
+        messages=[{"role": "system", "content": "You are a helpful data analyst."},
+                  {"role": "user", "content": prompt}],
         max_tokens=500
     )
     return response['choices'][0]['message']['content'].strip()
